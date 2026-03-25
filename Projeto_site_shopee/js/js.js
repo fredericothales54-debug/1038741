@@ -59,8 +59,13 @@ let produtos = [
         let carrinho = [];
         let pagamentoSelecionado = null;
         let usuarioLogado = false;
+        
  
         // ==================== FUNÇÕES ====================
+        function removerItem(id) {
+            carrinho = carrinho.filter(item => item.id !== id);
+            renderizarCarrinho();
+        }
         function preencherCategorias() {
             const ul = document.getElementById("category-list");
             ul.innerHTML = `<li onclick="filtrarPorCategoria('Todos')" class="px-4 py-3 rounded-2xl hover:bg-indigo-50 cursor-pointer font-medium text-indigo-700">Todos os produtos</li>`;
@@ -112,89 +117,159 @@ card.className = "product-card bg-white rounded-3xl overflow-hidden border";
         }
  
 function atualizarCarrinho() {
-            const count = document.getElementById("cart-count");
-            count.textContent = carrinho.reduce((a, i) => a + i.quantidade, 0);
- 
-            const container = document.getElementById("cart-items");
-            container.innerHTML = "";
-            let subtotal = 0;
- 
-            carrinho.forEach((item, index) => {
-                const totalItem = item.preco * item.quantidade;
-                subtotal += totalItem;
-                const div = document.createElement("div");
-                div.className = "flex gap-4";
-                div.innerHTML = `
-                    <img src="${item.img}" class="w-16 h-16 object-cover rounded-2xl">
-                    <div class="flex-1">
-                        <p class="font-medium text-sm">${item.nome}</p>
-                        <p class="text-xs text-gray-500">R$ ${item.preco.toFixed(2).replace('.', ',')}</p>
-                        <div class="flex items-center gap-3 mt-2">
-                            <button onclick="alterarQuantidade(${index}, -1)" class="w-6 h-6 bg-gray-100 rounded-lg">-</button>
-                            <span>${item.quantidade}</span>
-                            <button onclick="alterarQuantidade(${index}, 1)" class="w-6 h-6 bg-gray-100 rounded-lg">+</button>
-                        </div>
-                    </div>
-                    <div class="text-right font-semibold">R$ ${totalItem.toFixed(2).replace('.', ',')}</div>
-                `;
-                container.appendChild(div);
-            });
-            document.getElementById("cart-subtotal").textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-        }
- 
-        function alterarQuantidade(index, delta) {
-            carrinho[index].quantidade += delta;
-            if (carrinho[index].quantidade < 1) carrinho[index].quantidade = 1;
-            atualizarCarrinho();
-        }
- 
-        function toggleCart() {
-            document.getElementById("cart-sidebar").classList.toggle("open");
-        }
- 
-        function showLoginModal() {
-            document.getElementById("login-modal").classList.remove("hidden");
-            document.getElementById("login-modal").classList.add("flex");
-        }
- 
-        function hideLoginModal() {
-            document.getElementById("login-modal").classList.add("hidden");
-            document.getElementById("login-modal").classList.remove("flex");
-        }
- 
-        function doLogin() {
-            if (document.getElementById("login-user").value === "admin" && document.getElementById("login-pass").value === "123") {
-                usuarioLogado = true;
-                document.getElementById("login-status").innerHTML = `Olá, Admin <i class="fa-solid fa-check text-green-500"></i>`;
-                hideLoginModal();
-                alert("Login feito com sucesso! 🎉");
-            } else {
-                alert("Usuário ou senha errado. Use: admin / 123");
-            }
-        }
- 
-        function showCheckoutModal() {
-            if (carrinho.length === 0) return alert("Carrinho vazio!");
-            if (!usuarioLogado) { alert("Faça login primeiro!"); showLoginModal(); return; }
-            document.getElementById("checkout-modal").classList.remove("hidden");
-            document.getElementById("checkout-modal").classList.add("flex");
-            // preenche itens do checkout (código completo)
-            const container = document.getElementById("checkout-cart-items");
-            container.innerHTML = "";
-            let subtotal = 0;
-            carrinho.forEach(item => {
-                const total = item.preco * item.quantidade;
-                subtotal += total;
-                const div = document.createElement("div");
-                div.className = "flex justify-between";
-                div.innerHTML = `<div><p>${item.nome} × ${item.quantidade}</p></div><p>R$ ${total.toFixed(2).replace('.', ',')}</p>`;
-                container.appendChild(div);
-            });
-            document.getElementById("checkout-subtotal").textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
-            calcularTotalCheckout();
- 
+    const count = document.getElementById("cart-count");
+    count.textContent = carrinho.reduce((a, i) => a + i.quantidade, 0);
+
+    const container = document.getElementById("cart-items");
+    container.innerHTML = "";
+    let subtotal = 0;
+
+    carrinho.forEach((item, index) => {
+        const totalItem = item.preco * item.quantidade;
+        subtotal += totalItem;
+
+        const div = document.createElement("div");
+        div.className = "flex gap-4";
+
+        div.innerHTML = `
+            <img src="${item.img}" class="w-16 h-16 object-cover rounded-2xl">
+
+            <div class="flex-1">
+                <p class="font-medium text-sm">${item.nome}</p>
+                <p class="text-xs text-gray-500">R$ ${item.preco.toFixed(2).replace('.', ',')}</p>
+
+                <div class="flex items-center gap-3 mt-2">
+                    <button onclick="alterarQuantidade(${index}, -1)" class="w-6 h-6 bg-gray-100 rounded-lg">-</button>
+                    <span>${item.quantidade}</span>
+                    <button onclick="alterarQuantidade(${index}, 1)" class="w-6 h-6 bg-gray-100 rounded-lg">+</button>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-end justify-between">
+                <button onclick="removerItem(${index})" class="text-red-500 hover:text-red-700">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="text-right font-semibold">
+                    R$ ${totalItem.toFixed(2).replace('.', ',')}
+                </div>
+            </div>
+        `;
+
+        container.appendChild(div);
+    });
+
+    document.getElementById("cart-subtotal").textContent =
+        `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
 }
- 
+
+function alterarQuantidade(index, delta) {
+    if (!carrinho[index]) return;
+
+    carrinho[index].quantidade += delta;
+
+    if (carrinho[index].quantidade < 1) {
+        carrinho[index].quantidade = 1;
+    }
+
+    atualizarCarrinho();
+}
+
+function removerItem(index) {
+    if (!carrinho[index]) return;
+
+    if (confirm("Deseja remover este item?")) {
+        carrinho.splice(index, 1);
+        atualizarCarrinho();
+    }
+}
+
+function toggleCart() {
+    document.getElementById("cart-sidebar").classList.toggle("open");
+}
+
+function showLoginModal() {
+    document.getElementById("login-modal").classList.remove("hidden");
+    document.getElementById("login-modal").classList.add("flex");
+}
+
+function hideLoginModal() {
+    document.getElementById("login-modal").classList.add("hidden");
+    document.getElementById("login-modal").classList.remove("flex");
+}
+
+function doLogin() {
+    if (
+        document.getElementById("login-user").value === "admin" &&
+        document.getElementById("login-pass").value === "123"
+    ) {
+        usuarioLogado = true;
+
+        document.getElementById("login-status").innerHTML =
+            `Olá, Admin <i class="fa-solid fa-check text-green-500"></i>`;
+
+        hideLoginModal();
+        alert("Login feito com sucesso! 🎉");
+    } else {
+        alert("Usuário ou senha errado. Use: admin / 123");
+    }
+}
+
+function showCheckoutModal() {
+    if (carrinho.length === 0) {
+        alert("Carrinho vazio!");
+        return;
+    }
+
+    if (!usuarioLogado) {
+        alert("Faça login primeiro!");
+        showLoginModal();
+        return;
+    }
+
+    document.getElementById("checkout-modal").classList.remove("hidden");
+    document.getElementById("checkout-modal").classList.add("flex");
+
+    const container = document.getElementById("checkout-cart-items");
+    container.innerHTML = "";
+
+    let subtotal = 0;
+
+    carrinho.forEach(item => {
+        const total = item.preco * item.quantidade;
+        subtotal += total;
+
+        const div = document.createElement("div");
+        div.className = "flex justify-between";
+
+        div.innerHTML = `
+            <div><p>${item.nome} × ${item.quantidade}</p></div>
+            <p>R$ ${total.toFixed(2).replace('.', ',')}</p>
+        `;
+
+        container.appendChild(div);
+    });
+
+    document.getElementById("checkout-subtotal").textContent =
+        `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+
+    calcularTotalCheckout();
+}
+
+function calcularTotalCheckout() {
+    const subtotalText = document
+        .getElementById("checkout-subtotal")
+        .textContent;
+
+    const subtotal = parseFloat(
+        subtotalText.replace("R$ ", "").replace(",", ".")
+    );
+
+    const frete = 10; // valor fixo (pode mudar depois)
+    const total = subtotal + frete;
+
+    document.getElementById("checkout-total").textContent =
+        `R$ ${total.toFixed(2).replace('.', ',')}`;
+}
         function hideCheckoutModal() {
             document.getElementById("checkout-modal").classList.add("hidden");
             document.getElementById("checkout-modal").classList.remove("flex");
